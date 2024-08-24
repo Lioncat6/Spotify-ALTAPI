@@ -1,2 +1,7 @@
 # Spotify-ALTAPI
 So you take the spotify api and you remove the requirement to use an auth token and then you get the Spotify alternate API
+
+Literally just forwards api calls but appends it's own API token for public facing applications
+
+Docs:
+https://developer.spotify.com/documentation/web-api
