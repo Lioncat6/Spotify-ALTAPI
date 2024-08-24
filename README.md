@@ -13,6 +13,7 @@ config.json Template:
 ```
 {
     "secret": "<Client Secret>",
-    "id": "<Client ID>"
+    "id": "<Client ID>",
+    "port": <server port>
 }
 ```

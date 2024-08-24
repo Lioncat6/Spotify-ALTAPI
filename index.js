@@ -1,6 +1,6 @@
 const http = require("http");
 const axios = require("axios");
-const { secret, id } = require("./config.json");
+const { secret, id, port } = require("./config.json");
 
 var token = "";
 
@@ -72,7 +72,7 @@ const server = http.createServer(async (request, response) => {
 
 async function startServer(){
     await refreshToken();
-    const PORT = 3000;
+    const PORT = port;
     server.listen(PORT, () => {
         console.log(`Server listening on port ${PORT}`);
     });
