@@ -51,6 +51,7 @@ const server = http.createServer(async (request, response) => {
                     },
                 });
 			}
+			console.log(`Served Request ${(new Date(Date.now()).toLocaleString())}`)
 			response.writeHead(targetResponse.status, targetResponse.headers);
 			response.write(JSON.stringify(targetResponse.data));
 		} catch (error) {
