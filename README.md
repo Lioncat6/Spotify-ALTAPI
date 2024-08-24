@@ -7,3 +7,12 @@ Docs:
 https://developer.spotify.com/documentation/web-api
 
 Just Replace `api.spotify.com` with whatever url this is hosted on 
+
+config.json Template:
+
+```
+{
+    "secret": "<Client Secret>",
+    "id": "<Client ID>"
+}
+```
