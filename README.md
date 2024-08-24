@@ -6,7 +6,7 @@ Literally just forwards api calls but appends it's own API token for public faci
 Docs:
 https://developer.spotify.com/documentation/web-api
 
-Just Replace `api.spotify.com` with whatever url this is hosted on 
+Just Replace `api.spotify.com` with whatever url this is hosted on and don't worry about providing an authorization header
 
 config.json Template:
 
