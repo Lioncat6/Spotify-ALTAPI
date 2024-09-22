@@ -1,6 +1,11 @@
 const http = require("http");
+const https = require("https");
 const axios = require("axios");
-const { secret, id, port } = require("./config.json");
+const fs = require('fs'); 
+
+const express = require('express');
+const app = express();
+const { secret, id, httpPort, httpsPort } = require("./config.json");
 
 var token = "";
 
@@ -31,8 +36,15 @@ async function refreshToken() {
 }
 
 
-const server = http.createServer(async (request, response) => {
-	try {
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*'); // Replace with your allowed origin(s)
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    next();
+});
+
+
+app.get('*', async (request, response) => {
+    try {
 		try {
 			const urlPath = request.url;
 
@@ -71,13 +83,22 @@ const server = http.createServer(async (request, response) => {
 	response.end();
 });
 
+
 async function startServer(){
     await refreshToken();
-    const PORT = port;
-    server.listen(PORT, () => {
-        console.log(`Server listening on port ${PORT}`);
-    });
+	const options = {
+		key: fs.readFileSync('server.key'),
+		cert: fs.readFileSync('server.cert'),
+	};
+	https.createServer(options, app).listen(httpsPort, () => {
+		console.log(`Server is running at port ${httpsPort} (HTTPS)`);
+	});
+	https.createServer(app).listen(httpPort, () => {
+		console.log(`Server is running at port ${httpPort} (HTTP)`);
+	});
+    
 }
 
 startServer()
+
 
