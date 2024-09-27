@@ -64,7 +64,7 @@ app.get('*', async (request, response) => {
             });
         }
 
-        console.log(`Served Request ${(new Date(Date.now()).toLocaleString())} (${Date.new()-startTime}ms)`);
+        console.log(`Served Request ${(new Date(Date.now()).toLocaleString())} (${Date.now()-startTime}ms)`);
         response.writeHead(targetResponse.status, targetResponse.headers);
         response.write(JSON.stringify(targetResponse.data));
     } catch (error) {
