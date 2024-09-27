@@ -44,6 +44,7 @@ app.use((req, res, next) => {
 
 
 app.get('*', async (request, response) => {
+    let startTime = Date.now();
     try {
         const urlPath = request.url;
         const targetUrl = `https://api.spotify.com${urlPath}`;
@@ -63,7 +64,7 @@ app.get('*', async (request, response) => {
             });
         }
 
-        console.log(`Served Request ${(new Date(Date.now()).toLocaleString())}`);
+        console.log(`Served Request ${(new Date(Date.now()).toLocaleString())} (${Date.new()-startTime}ms)`);
         response.writeHead(targetResponse.status, targetResponse.headers);
         response.write(JSON.stringify(targetResponse.data));
     } catch (error) {
@@ -92,6 +93,7 @@ app.get('*', async (request, response) => {
                 "reason": "This was caused due to an authentication issue with Spotify. This error was returned by ALT-API and NOT Spotify!",
                 "rawError": JSON.stringify(error.response ? error.response.data : error.message)
             }));
+            console.error(error.response ? error.response.data : error.message)
         }
     }
 
