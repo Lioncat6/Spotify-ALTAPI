@@ -87,8 +87,11 @@ app.get('*', async (request, response) => {
 async function startServer(){
     await refreshToken();
 	const options = {
-		key: fs.readFileSync('server.key'),
-		cert: fs.readFileSync('server.cert'),
+		key: fs.readFileSync('domain.key'),
+        cert: fs.readFileSync('domain.crt'),
+        ca: [
+            fs.readFileSync('ca_bundle.crt')
+        ]
 	};
 	https.createServer(options, app).listen(httpsPort, () => {
 		console.log(`Server is running at port ${httpsPort} (HTTPS)`);
