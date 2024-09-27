@@ -38,49 +38,64 @@ async function refreshToken() {
 
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*'); // Replace with your allowed origin(s)
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
     next();
 });
 
 
 app.get('*', async (request, response) => {
     try {
-		try {
-			const urlPath = request.url;
+        const urlPath = request.url;
+        const targetUrl = `https://api.spotify.com${urlPath}`;
 
-			const targetUrl = `https://api.spotify.com${urlPath}`;
+        let targetResponse = await axios.get(targetUrl, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
 
-			let targetResponse = await axios.get(targetUrl, {
-				headers: {
-					Authorization: `Bearer ${token}`,
-				},
-			});
-			if (response.status == 400 || response.status == 401) {
-				await refreshToken();
-                targetResponse = await axios.get(targetUrl, {
+        if (targetResponse.status === 400 || targetResponse.status === 401) {
+            await refreshToken();
+            targetResponse = await axios.get(targetUrl, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+        }
+
+        console.log(`Served Request ${(new Date(Date.now()).toLocaleString())}`);
+        response.writeHead(targetResponse.status, targetResponse.headers);
+        response.write(JSON.stringify(targetResponse.data));
+    } catch (error) {
+        if (error.response && (error.response.status !== 401 && error.response.status !== 400)) {
+            response.writeHead(error.response.status, error.response.headers);
+            response.write(JSON.stringify(error.response.data));
+        } else if (error.response && error.response.status === 401) {
+            await refreshToken();
+            try {
+                const targetUrl = `https://api.spotify.com${request.url}`;
+                const targetResponse = await axios.get(targetUrl, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
                 });
-			}
-			console.log(`Served Request ${(new Date(Date.now()).toLocaleString())}`)
-			response.writeHead(targetResponse.status, targetResponse.headers);
-			response.write(JSON.stringify(targetResponse.data));
-		} catch (error) {
-            if (error.response.status != 401 && error.response.status != 400){
-            //console.error("Error forwarding request:", error.message);
-			response.writeHead(error.response.status, error.response.headers);
-			response.write(JSON.stringify(error.response.data));
-            } else {
-                response.writeHead(500);
-			    response.write(JSON.stringify({"error":"Spotify Authentication Issue", "reason": "This was caused due to an authentication issue with spotify. This error was returned by ALT-API and NOT Spotify!", "rawError": JSON.stringify(error.response.data)}));
+                response.writeHead(targetResponse.status, targetResponse.headers);
+                response.write(JSON.stringify(targetResponse.data));
+            } catch (retryError) {
+                response.writeHead(retryError.response.status, retryError.response.headers);
+                response.write(JSON.stringify(retryError.response.data));
             }
-		}
-	} catch (error) {
-		console.error("Error forwarding request:", error);
-	}
+        } else {
+            response.writeHead(500);
+            response.write(JSON.stringify({
+                "error": "Spotify Authentication Issue",
+                "reason": "This was caused due to an authentication issue with Spotify. This error was returned by ALT-API and NOT Spotify!",
+                "rawError": JSON.stringify(error.response ? error.response.data : error.message)
+            }));
+        }
+    }
 
-	response.end();
+    response.end();
 });
 
 
