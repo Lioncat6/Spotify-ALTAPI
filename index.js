@@ -43,60 +43,57 @@ app.use((req, res, next) => {
 });
 
 
-app.get('*', async (request, response) => {
-    let startTime = Date.now();
-    try {
-        const urlPath = request.url;
-        const targetUrl = `https://api.spotify.com${urlPath}`;
-
-        let targetResponse = await axios.get(targetUrl, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-
-        if (targetResponse.status === 400 || targetResponse.status === 401) {
-            await refreshToken();
-            targetResponse = await axios.get(targetUrl, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-        }
-
-        console.log(`Served Request ${(new Date(Date.now()).toLocaleString())} (${Date.now()-startTime}ms)`);
-        response.writeHead(targetResponse.status, targetResponse.headers);
-        response.write(JSON.stringify(targetResponse.data));
-    } catch (error) {
-        if (error.response && (error.response.status !== 401 && error.response.status !== 400)) {
-            response.writeHead(error.response.status, error.response.headers);
-            response.write(JSON.stringify(error.response.data));
-        } else if (error.response && error.response.status === 401) {
-            await refreshToken();
-            try {
-                const targetUrl = `https://api.spotify.com${request.url}`;
-                const targetResponse = await axios.get(targetUrl, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
-                response.writeHead(targetResponse.status, targetResponse.headers);
-                response.write(JSON.stringify(targetResponse.data));
-            } catch (retryError) {
-                response.writeHead(retryError.response.status, retryError.response.headers);
-                response.write(JSON.stringify(retryError.response.data));
-            }
-        } else {
-            response.writeHead(500);
-            response.write(JSON.stringify({
-                "error": "Spotify Authentication Issue",
-                "reason": "This was caused due to an authentication issue with Spotify. This error was returned by ALT-API and NOT Spotify!",
-                "rawError": JSON.stringify(error.response ? error.response.data : error.message)
-            }));
-            console.error(error.response ? error.response.data : error.message)
-        }
-    }
-
+app.get('*', async (request, response) => {    
+    let startTime = Date.now();    
+    try {        
+        const urlPath = request.url;        
+        const targetUrl = `https://api.spotify.com${urlPath}`;        
+        let targetResponse = await axios.get(targetUrl, {            
+            headers: {                
+                Authorization: `Bearer ${token}`,            
+            },        
+        });        
+        if (targetResponse.status === 400 || targetResponse.status === 401) {            
+            await refreshToken();            
+            targetResponse = await axios.get(targetUrl, {                
+                headers: {                    
+                    Authorization: `Bearer ${token}`,                
+                },            
+            });        
+        }        
+        const ipAddress = request.headers['x-forwarded-for'] || request.connection.remoteAddress;        
+        console.log(`Served Request ${(new Date(Date.now()).toLocaleString())} (${Date.now()-startTime}ms) from IP: ${ipAddress}`);        
+        response.writeHead(targetResponse.status, targetResponse.headers);        
+        response.write(JSON.stringify(targetResponse.data));    
+    } catch (error) {        
+        if (error.response && (error.response.status !== 401 && error.response.status !== 400)) {            
+            response.writeHead(error.response.status, error.response.headers);            
+            response.write(JSON.stringify(error.response.data));        
+        } else if (error.response && error.response.status === 401) {            
+            await refreshToken();            
+            try {                
+                const targetUrl = `https://api.spotify.com${request.url}`;                
+                const targetResponse = await axios.get(targetUrl, {                    
+                    headers: {                        
+                        Authorization: `Bearer ${token}`,                    
+                    },                
+                });                
+                response.writeHead(targetResponse.status, targetResponse.headers);                
+                response.write(JSON.stringify(targetResponse.data));            
+            } catch (retryError) {                
+                response.writeHead(retryError.response.status, retryError.response.headers);                
+                response.write(JSON.stringify(retryError.response.data));            
+            }        
+        } else {            
+            response.writeHead(500);            
+            response.write(JSON.stringify({                
+                "error": "Spotify Authentication Issue",                
+                "reason": "This was caused due to an authentication issue with Spotify. This error was returned by ALT-API and NOT Spotify!",                
+                "rawError": JSON.stringify(error.response ? error.response.data : error.message)            
+            }));            
+            console.error(error.response ? error.response.data : error.message)        
+        }    
+    }    
     response.end();
 });
 
