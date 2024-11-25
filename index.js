@@ -1,13 +1,13 @@
 const http = require("http");
 const https = require("https");
-const axios = require("axios");
-const fs = require('fs'); 
-
 const express = require('express');
 const app = express();
 const { secret, id, httpPort, httpsPort } = require("./config.json");
+const fs = require('fs'); 
+const axios = require("axios");
 
 var token = "";
+const serverStartTime = Date.now(); // Record server start time
 
 const authOptions = {
 	url: "https://accounts.spotify.com/api/token",
@@ -23,11 +23,9 @@ async function refreshToken() {
 		const response = await axios(authOptions);
 		if (response.status === 200) {
 			token = response.data.access_token;
-			// Use the token as needed
 			console.log("Refreshed Access token:", token);
 		} else {
 			throw new Error("Error fetching access token:", response.statusText);
-			//console.error('Error fetching access token:', response.statusText);
 		}
 	} catch (error){
         throw new Error("Error fetching access token:", error);
@@ -35,13 +33,36 @@ async function refreshToken() {
 	return token;
 }
 
-
 app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*'); // Replace with your allowed origin(s)
+    res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
     next();
 });
 
+// /ping endpoint
+app.get('/ping', (req, res) => {
+    res.status(200).send('pong');
+});
+
+// /uptime endpoint
+app.get('/uptime', (req, res) => {
+    const uptimeMilliseconds = Date.now() - serverStartTime;
+    const uptimeSeconds = Math.floor(uptimeMilliseconds / 1000);
+    const hours = Math.floor(uptimeSeconds / 3600);
+    const minutes = Math.floor((uptimeSeconds % 3600) / 60);
+    const seconds = uptimeSeconds % 60;
+    
+    const uptimeData = {
+        human_readable: `${hours}h ${minutes}m ${seconds}s`,
+        milliseconds: uptimeMilliseconds,
+        seconds: uptimeSeconds,
+        minutes: uptimeSeconds / 60,
+        hours: uptimeSeconds / 3600,
+        days: uptimeSeconds / 86400
+    };
+    
+    res.status(200).json(uptimeData);
+});
 
 app.get('*', async (request, response) => {    
     let startTime = Date.now();    
@@ -97,7 +118,6 @@ app.get('*', async (request, response) => {
     response.end();
 });
 
-
 async function startServer(){
     await refreshToken();
 	const options = {
@@ -110,12 +130,6 @@ async function startServer(){
 	https.createServer(options, app).listen(httpsPort, () => {
 		console.log(`Server is running at port ${httpsPort} (HTTPS)`);
 	});
-	//https.createServer(app).listen(httpPort, () => {
-	//	console.log(`Server is running at port ${httpPort} (HTTP)`);
-	//});
-    
 }
 
-startServer()
-
-
+startServer();
