@@ -7,6 +7,7 @@ const fs = require('fs');
 const axios = require("axios");
 
 var token = "";
+let failedSpotifyAuth = false;
 const serverStartTime = Date.now(); // Record server start time
 
 const authOptions = {
@@ -36,6 +37,16 @@ async function refreshToken() {
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    next();
+});
+
+app.use((req, res, next) => {
+    if (failedSpotifyAuth) {
+        return res.status(503).json({
+            error: "Spotify Auth Failed",
+            message: "The server is currently unable to authenticate with Spotify's api. The server will retry every 5 minutes."
+        });
+    }
     next();
 });
 
@@ -118,18 +129,33 @@ app.get('*', async (request, response) => {
     response.end();
 });
 
-async function startServer(){
-    await refreshToken();
-	const options = {
-		key: fs.readFileSync('domain.key'),
+async function startServer() {
+    const retryInterval = 5 * 60 * 1000; // Retry Every 5 minutes
+
+    async function tryRefreshToken() {
+        try {
+            failedSpotifyAuth = false
+            await refreshToken();
+        } catch (error) {
+            failedSpotifyAuth = true
+            console.error("Error refreshing token. Retrying in 5 minutes...", error);
+            setTimeout(tryRefreshToken, retryInterval);
+        }
+    }
+
+    await tryRefreshToken();
+    
+    const options = {
+        key: fs.readFileSync('domain.key'),
         cert: fs.readFileSync('domain.crt'),
         ca: [
             fs.readFileSync('ca_bundle.crt')
         ]
-	};
-	https.createServer(options, app).listen(httpsPort, () => {
-		console.log(`Server is running at port ${httpsPort} (HTTPS)`);
-	});
+    };
+
+    https.createServer(options, app).listen(httpsPort, () => {
+        console.log(`Server is running at port ${httpsPort} (HTTPS)`);
+    });
 }
 
 startServer();
