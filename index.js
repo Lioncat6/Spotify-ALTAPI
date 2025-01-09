@@ -78,7 +78,15 @@ app.get('/uptime', (req, res) => {
 app.get('*', async (request, response) => {    
     let startTime = Date.now();    
     try {        
-        const urlPath = request.url;        
+        const urlPath = request.url; 
+        
+        if (urlPath === '/') {
+            response.writeHead(400, { 'Content-Type': 'application/json' });
+            response.write(JSON.stringify({ error: "Please provide a path. ie /v1/artists" }));
+            response.end();
+            return;
+        }
+
         const targetUrl = `https://api.spotify.com${urlPath}`;        
         let targetResponse = await axios.get(targetUrl, {            
             headers: {                
@@ -98,7 +106,7 @@ app.get('*', async (request, response) => {
         response.writeHead(targetResponse.status, targetResponse.headers);        
         response.write(JSON.stringify(targetResponse.data));    
     } catch (error) {        
-        if (error.response && (error.response.status !== 401 && error.response.status !== 400)) {            
+        if (error.response && error.response.status === 400) {            
             response.writeHead(error.response.status, error.response.headers);            
             response.write(JSON.stringify(error.response.data));        
         } else if (error.response && error.response.status === 401) {            
