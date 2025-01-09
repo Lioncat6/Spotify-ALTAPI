@@ -146,13 +146,19 @@ async function startServer() {
     await tryRefreshToken();
     
     if (useHttps) {
-        const options = {
-            key: fs.readFileSync('domain.key'),
-            cert: fs.readFileSync('domain.crt'),
-            ca: [
-                fs.readFileSync('ca_bundle.crt')
-            ]
-        };
+        let options;
+        try {
+            options = {
+                key: fs.readFileSync('domain.key'),
+                cert: fs.readFileSync('domain.crt'),
+                ca: [
+                    fs.readFileSync('ca_bundle.crt')
+                ]
+            };
+        } catch (e) {
+            console.error(String(e))
+        }
+        
 
         https.createServer(options, app).listen(port, () => {
             console.log(`Server is running at port ${port} (HTTPS)`);
