@@ -14,6 +14,7 @@ config.json Template:
 {
     "secret": "<Client Secret>",
     "id": "<Client ID>",
-    "port": <server port>
+    "port": <server port>,
+    "useHttps": <true or false>
 }
 ```

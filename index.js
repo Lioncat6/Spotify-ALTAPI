@@ -2,7 +2,7 @@ const http = require("http");
 const https = require("https");
 const express = require('express');
 const app = express();
-const { secret, id, httpPort, httpsPort } = require("./config.json");
+const { secret, id, port, useHttps } = require("./config.json");
 const fs = require('fs'); 
 const axios = require("axios");
 
@@ -145,17 +145,23 @@ async function startServer() {
 
     await tryRefreshToken();
     
-    const options = {
-        key: fs.readFileSync('domain.key'),
-        cert: fs.readFileSync('domain.crt'),
-        ca: [
-            fs.readFileSync('ca_bundle.crt')
-        ]
-    };
+    if (useHttps) {
+        const options = {
+            key: fs.readFileSync('domain.key'),
+            cert: fs.readFileSync('domain.crt'),
+            ca: [
+                fs.readFileSync('ca_bundle.crt')
+            ]
+        };
 
-    https.createServer(options, app).listen(httpsPort, () => {
-        console.log(`Server is running at port ${httpsPort} (HTTPS)`);
-    });
+        https.createServer(options, app).listen(port, () => {
+            console.log(`Server is running at port ${port} (HTTPS)`);
+        });
+    } else {
+        http.createServer(app).listen(port, () => {
+            console.log(`Server is running at port ${port} (HTTP)`);
+        });
+    }
 }
 
 startServer();
