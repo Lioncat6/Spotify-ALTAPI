@@ -144,7 +144,9 @@ async function startServer() {
     }
 
     await tryRefreshToken();
-    
+
+    console.log(condition ? "Https Enabled" : "Https Disabled"); 
+
     if (useHttps) {
         let options;
         try {
