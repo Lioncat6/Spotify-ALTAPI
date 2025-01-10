@@ -131,7 +131,7 @@ app.get('*', async (request, response) => {
                 "reason": "This was caused due to an authentication issue with Spotify. This error was returned by ALT-API and NOT Spotify!",                
                 "rawError": JSON.stringify(error.response ? error.response.data : error.message)            
             }));            
-            console.error(error.response ? error.response.data : error.message)        
+            console.error((new Date(Date.now()).toLocaleString()), error.response ? error.response.data : error.message)        
         }    
     }    
     response.end();
