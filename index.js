@@ -1,6 +1,7 @@
 const http = require("http");
 const https = require("https");
 const express = require('express');
+const bodyParser = require('body-parser');
 const app = express();
 const { secret, id, port, useHttps, motdSecretKey } = require("./config.json");
 const fs = require('fs'); 
@@ -34,6 +35,8 @@ async function refreshToken() {
     }
 	return token;
 }
+
+app.use(bodyParser.json());
 
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
@@ -95,7 +98,7 @@ app.post('/update-motd', (req, res) => {
         if (clear) {
             motds = [];
             return res.status(200).json({ message: "MOTD queue cleared successfully" });
-        }else if (newMotd && expiry) {
+        } else if (newMotd && expiry) {
             const expiryTime = Date.now() + expiry * 1000; // Convert expiry to milliseconds
             motds.push({ message: newMotd, expiry: expiryTime });
             res.status(200).json({ message: "MOTD added successfully" });
