@@ -2,6 +2,7 @@ const http = require("http");
 const https = require("https");
 const express = require('express');
 const app = express();
+const { secret, id, port, useHttps, motdSecretKey } = require("./config.json");
 const { secret, id, port, useHttps } = require("./config.json");
 const fs = require('fs'); 
 const axios = require("axios");
@@ -9,6 +10,7 @@ const axios = require("axios");
 var token = "";
 let failedSpotifyAuth = false;
 const serverStartTime = Date.now(); // Record server start time
+let motd = ""; // Default MOTD
 
 const authOptions = {
 	url: "https://accounts.spotify.com/api/token",
@@ -55,14 +57,19 @@ app.get('/ping', (req, res) => {
     res.status(200).send('pong');
 });
 
-// /uptime endpoint
+function getCurrentMotd() {
+    const now = Date.now();
+    motds = motds.filter(motd => motd.expiry > now); // Remove expired MOTDs
+    return motds.length > 0 ? motds[0].message : "";
+}
+
 app.get('/uptime', (req, res) => {
     const uptimeMilliseconds = Date.now() - serverStartTime;
     const uptimeSeconds = Math.floor(uptimeMilliseconds / 1000);
     const hours = Math.floor(uptimeSeconds / 3600);
     const minutes = Math.floor((uptimeSeconds % 3600) / 60);
     const seconds = uptimeSeconds % 60;
-    
+
     const uptimeData = {
         human_readable: `${hours}h ${minutes}m ${seconds}s`,
         milliseconds: uptimeMilliseconds,
@@ -71,8 +78,30 @@ app.get('/uptime', (req, res) => {
         hours: uptimeSeconds / 3600,
         days: uptimeSeconds / 86400
     };
+
+    const currentMotd = getCurrentMotd();
+    if (currentMotd && currentMotd !== "") {
+        uptimeData.motd = currentMotd; // Add the current MOTD if it exists
+    }
     
     res.status(200).json(uptimeData);
+});
+
+app.post('/update-motd', (req, res) => {
+    const { secretKey, clear, motd: newMotd, expiry } = req.body;
+    if (secretKey !== motdSecretKey) {
+        return res.status(403).json({ error: "Forbidden: Invalid secret key" });
+    }
+    if (clear) {
+        motds = [];
+        return res.status(200).json({ message: "MOTD queue cleared successfully" });
+    }else if (newMotd && expiry) {
+        const expiryTime = Date.now() + expiry * 1000; // Convert expiry to milliseconds
+        motds.push({ message: newMotd, expiry: expiryTime });
+        res.status(200).json({ message: "MOTD added successfully" });
+    } else {
+        res.status(400).json({ error: "MOTD and expiry time are required" });
+    }
 });
 
 app.get('*', async (request, response) => {    
