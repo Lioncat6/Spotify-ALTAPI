@@ -3,14 +3,13 @@ const https = require("https");
 const express = require('express');
 const app = express();
 const { secret, id, port, useHttps, motdSecretKey } = require("./config.json");
-const { secret, id, port, useHttps } = require("./config.json");
 const fs = require('fs'); 
 const axios = require("axios");
 
 var token = "";
 let failedSpotifyAuth = false;
 const serverStartTime = Date.now(); // Record server start time
-let motd = ""; // Default MOTD
+let motds = [];
 
 const authOptions = {
 	url: "https://accounts.spotify.com/api/token",
