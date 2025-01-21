@@ -87,19 +87,23 @@ app.get('/uptime', (req, res) => {
 });
 
 app.post('/update-motd', (req, res) => {
-    const { secretKey, clear, motd: newMotd, expiry } = req.body;
-    if (secretKey !== motdSecretKey) {
-        return res.status(403).json({ error: "Forbidden: Invalid secret key" });
-    }
-    if (clear) {
-        motds = [];
-        return res.status(200).json({ message: "MOTD queue cleared successfully" });
-    }else if (newMotd && expiry) {
-        const expiryTime = Date.now() + expiry * 1000; // Convert expiry to milliseconds
-        motds.push({ message: newMotd, expiry: expiryTime });
-        res.status(200).json({ message: "MOTD added successfully" });
+    if (motdSecretKey && motdSecretKey != "") {
+        const { secretKey, clear, motd: newMotd, expiry } = req.body;
+        if (secretKey !== motdSecretKey) {
+            return res.status(403).json({ error: "Forbidden: Invalid secret key" });
+        }
+        if (clear) {
+            motds = [];
+            return res.status(200).json({ message: "MOTD queue cleared successfully" });
+        }else if (newMotd && expiry) {
+            const expiryTime = Date.now() + expiry * 1000; // Convert expiry to milliseconds
+            motds.push({ message: newMotd, expiry: expiryTime });
+            res.status(200).json({ message: "MOTD added successfully" });
+        } else {
+            res.status(400).json({ error: "MOTD and expiry time are required" });
+        }
     } else {
-        res.status(400).json({ error: "MOTD and expiry time are required" });
+        res.status(500).json({ error: "MOTD disabled" });
     }
 });
 
